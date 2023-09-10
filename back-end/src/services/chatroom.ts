@@ -12,7 +12,11 @@ export const getAll = async (): Promise<ChatRoom[]> => {
 }
 
 export const getById = async (id: number): Promise<ChatRoom | null> => {
-  return await ChatRoom.findOne({ where: { id } })
+  return await ChatRoom.findOne({ where: { id }, include: ["members"] })
+}
+
+export const getByName = async (name: string): Promise<ChatRoom | null> => {
+  return await ChatRoom.findOne({ where: { name }, include: ["members"] })
 }
 
 export const getJoinedByUserId = async (

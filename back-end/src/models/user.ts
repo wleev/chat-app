@@ -7,6 +7,7 @@ import {
   DataTypes,
   Association,
   HasManyCreateAssociationMixin,
+  HasManyRemoveAssociationMixin,
 } from "sequelize"
 
 import sequelizeConnection from "../database"
@@ -23,6 +24,10 @@ export default class User extends Model<
   declare chatRooms?: NonAttribute<ChatRoom[]>
 
   declare createChatRoom: HasManyCreateAssociationMixin<ChatRoom>
+  declare removeChatRoom: HasManyRemoveAssociationMixin<
+    ChatRoom,
+    ChatRoom["id"]
+  >
 
   declare static associations: {
     ownedChatRooms: Association<User, ChatRoom>

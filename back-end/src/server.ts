@@ -1,4 +1,5 @@
 import Hapi, { Server } from "@hapi/hapi"
+import { register } from "./controllers/websocket"
 
 export const create = async (): Promise<Server> => {
   const server = Hapi.server({
@@ -7,11 +8,10 @@ export const create = async (): Promise<Server> => {
     debug: { request: ["error"] },
   })
 
-  server.route({
-    method: "GET",
-    path: "/",
-    handler: () => {
-      return "Hello, world!"
+  server.ext({
+    type: "onPostStart",
+    method: (s: Server) => {
+      register(s)
     },
   })
 
