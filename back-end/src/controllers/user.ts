@@ -3,12 +3,15 @@ import * as UserService from "../services/user"
 
 export default class UserController {
   public async findOrCreate(request: Request, h: ResponseToolkit) {
-    const { nickname } = request.payload as { nickname: string }
-    const user = await UserService.getByNickname(nickname)
+    const { username } = JSON.parse(request.payload as string) as {
+      username: string
+    }
+    console.log("username", username)
+    const user = await UserService.getByNickname(username)
     if (user) {
       return h.response(user).code(200)
     }
-    const newUser = await UserService.create(nickname)
+    const newUser = await UserService.create(username)
     return h.response(newUser).code(201)
   }
 

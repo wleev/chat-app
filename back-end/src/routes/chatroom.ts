@@ -6,7 +6,7 @@ function register(server: Server) {
 
   server.route({
     method: "GET",
-    path: "/chatroom/all",
+    path: "/chatrooms",
     handler: (req: Request, h: ResponseToolkit) => {
       return chatRoomController.getAll(req, h)
     },

@@ -51,6 +51,18 @@ export const joinById = async (
   await room.addMember(userId)
 }
 
+export const isMemberById = async (
+  roomId: number,
+  userId: number,
+): Promise<boolean> => {
+  const room = await getById(roomId)
+  if (!room) {
+    throw new Error("Room not found")
+  }
+  const members = await room.members
+  return members.some((member) => member.id === userId)
+}
+
 export const leaveById = async (roomId: number, userId: number) => {
   const room = await getById(roomId)
   if (!room) {

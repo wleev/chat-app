@@ -14,8 +14,8 @@ import sequelizeConnection from "../database"
 import ChatRoom from "./chatroom"
 
 export default class User extends Model<
-  InferAttributes<User>,
-  InferCreationAttributes<User>
+  InferAttributes<User, { omit: "ownedChatRooms" }>,
+  InferCreationAttributes<User, { omit: "ownedChatRooms" }>
 > {
   declare id: CreationOptional<number>
   declare nickname: string
@@ -53,7 +53,9 @@ User.init(
   },
 )
 User.hasMany(ChatRoom, {
+  sourceKey: "id",
   foreignKey: "creatorId",
+  as: "ownedChatRooms",
 })
 User.belongsToMany(ChatRoom, { as: "chatRooms", through: "User_ChatRooms" })
 ChatRoom.belongsToMany(User, { as: "members", through: "User_ChatRooms" })

@@ -45,6 +45,10 @@ ChatRoom.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    creatorId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
   },
   {
     tableName: "chatrooms",

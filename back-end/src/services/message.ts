@@ -29,7 +29,7 @@ export const addMessage = async (
 export const editMessage = async (
   userName: string,
   roomName: string,
-  messageId: number,
+  messageId: string,
   content: string,
 ): Promise<Message> => {
   const user = await getByNickname(userName)

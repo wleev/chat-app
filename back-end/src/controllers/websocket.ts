@@ -3,15 +3,12 @@ import { IncomingMessage } from "http"
 import ws from "ws"
 import { getByNickname } from "../services/user"
 import { editMessage, addMessage } from "../services/message"
-import { getByName } from "../services/chatroom"
+import { getByName, joinById } from "../services/chatroom"
+import User from "../models/user"
 
 interface WSMessage {
-  type: "handshake" | "chat" | "edit" | "update"
-  payload: HandshakeMessage | ChatMessage | EditMessage
-}
-
-interface HandshakeMessage {
-  username: string
+  type: "chat" | "edit" | "join"
+  payload: ChatMessage | EditMessage | string
 }
 
 interface ChatMessage {
@@ -21,7 +18,7 @@ interface ChatMessage {
 }
 
 interface EditMessage extends ChatMessage {
-  messageId: number
+  messageId: string
 }
 
 interface ChatUpdate extends EditMessage {
@@ -44,42 +41,53 @@ export function register(server: Server) {
   const wss: ws.Server = new ws.Server({
     server: server.listener,
   })
-  wss.on("connection", (ws: ws.WebSocket, request: IncomingMessage) => {
-    if (request.url?.endsWith("/websocket")) {
-      ws.on("message", (message: string) => {
-        processMessage(ws, message)
-      })
+  wss.on("connection", async (ws: ws.WebSocket, request: IncomingMessage) => {
+    const url = new URL(request.url ?? "", `http://${request.headers.host}`)
+    const username = url.searchParams.get("username")
+    if (username) {
+      const user = await initializeConnection(ws, username)
+      if (user) {
+        if (url.pathname.endsWith("/websocket")) {
+          ws.on("message", (message: string) => {
+            processMessage(ws, user, message)
+          })
+        }
+      }
     }
   })
 }
 
-async function processMessage(ws: ws.WebSocket, raw: string): Promise<void> {
+async function processMessage(
+  ws: ws.WebSocket,
+  user: User,
+  raw: string,
+): Promise<void> {
   const message: WSMessage = JSON.parse(raw)
-  if (message.type === "handshake") {
-    await processHandshakeMessage(ws, message.payload as HandshakeMessage)
-  } else if (message.type === "chat") {
+  if (message.type === "chat") {
     await processChatMessage(message.payload as ChatMessage)
   } else if (message.type === "edit") {
     await ProcessEditMessage(message.payload as EditMessage)
+  } else if (message.type === "join") {
+    await ProcessJoinMessage(user, message.payload as string)
   }
 }
 
-async function processHandshakeMessage(
+async function initializeConnection(
   ws: ws.WebSocket,
-  message: HandshakeMessage,
-): Promise<void> {
-  const { username } = message
+  username: string,
+): Promise<User | null> {
   if (connections.has(username)) {
-    ws.send("Error: User already connected!")
-    ws.close()
+    ws.close(4400, "User already connected")
+    return null
   }
   const user = await getByNickname(username)
   if (!user) {
-    ws.send("Error: User not found!")
-    ws.close()
+    ws.close(4404, "User not found")
+    return null
   } else {
     const rooms = user.chatRooms?.map((room) => room.name)
     connections.set(user.nickname, new Connection(rooms ?? [], ws))
+    return user
   }
 }
 
@@ -99,16 +107,17 @@ async function processChatMessage(incoming: ChatMessage): Promise<string> {
   for (const member of members) {
     const connection = connections.get(member)
     if (connection) {
+      const update: ChatUpdate = {
+        room,
+        user,
+        message: content,
+        messageId: message.id,
+        timestamp: message.timestamp,
+      }
       connection.ws.send(
         JSON.stringify({
           type: "update",
-          payload: {
-            room,
-            user,
-            message: content,
-            messageId: message.id,
-            timestamp: message.timestamp,
-          },
+          payload: update,
         }),
       )
     }
@@ -132,19 +141,39 @@ async function ProcessEditMessage(incoming: EditMessage): Promise<string> {
   for (const member of members) {
     const connection = connections.get(member)
     if (connection) {
+      const update: ChatUpdate = {
+        room,
+        user,
+        message: content,
+        messageId: message.id,
+        timestamp: message.timestamp,
+      }
       connection.ws.send(
         JSON.stringify({
           type: "update",
-          payload: {
-            room,
-            user,
-            message: content,
-            messageId: message.id,
-            timestamp: message.timestamp,
-          },
+          payload: update,
         }),
       )
     }
   }
   return ""
+}
+
+async function ProcessJoinMessage(user: User, room: string) {
+  const connection = connections.get(user.nickname)
+  if (!connection) {
+    return
+  }
+  if (!connection.rooms.includes(room)) {
+    connection.rooms.push(room)
+  }
+
+  const chatroom = await getByName(room)
+  if (!chatroom) {
+    return
+  }
+
+  if (!chatroom.members?.find((member) => member.id === user.id)) {
+    await joinById(chatroom.id, user.id)
+  }
 }
