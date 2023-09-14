@@ -1,23 +1,15 @@
 import { useChatStore } from "@/stores/chat"
-
-interface WSMessage {
-  type: "chat" | "edit" | "update"
-  payload: ChatMessage | EditMessage | ChatUpdate
-}
-
-interface ChatMessage {
-  room: string
-  user: string
-  message: string
-}
-
-interface EditMessage extends ChatMessage {
-  messageId: string
-}
-
-export interface ChatUpdate extends EditMessage {
-  timestamp: Date
-}
+import {
+  type ChatMessage,
+  type ChatUpdate,
+  type WSIncomingMessage,
+  WSIncomingType,
+  type RoomsUpdate,
+  type StatusUpdate,
+  type WSOutgoingMessage,
+  WSOutgoingType,
+  type EditMessage,
+} from "@/types/chatsocket"
 
 export default class ChatSocket {
   private _socket: WebSocket
@@ -42,24 +34,44 @@ export default class ChatSocket {
 
   private messageHandler(event: MessageEvent): any {
     console.log("CHATSOCKET -- Websocket message received. ", event)
-    const message: WSMessage = JSON.parse(event.data)
+    const message: WSIncomingMessage<WSIncomingType> = JSON.parse(event.data)
 
-    if (message.type === "update") {
-      this._chatStore.addMessage(message.payload)
+    switch (message.type) {
+      case WSIncomingType.Update:
+        this._chatStore.addMessage(message.payload as ChatUpdate)
+        break
+      case WSIncomingType.RoomsUpdate:
+        this._chatStore.updateRooms(message.payload as RoomsUpdate)
+        break
+      case WSIncomingType.StatusUpdate:
+        this._chatStore.updateStatus(message.payload as StatusUpdate)
+        break
+      default:
+        console.log("CHATSOCKET -- Unknown message type. ", message)
     }
   }
 
   public sendMessage(message: ChatMessage) {
-    const wrapped = {
-      type: "chat",
+    const wrapped: WSOutgoingMessage<WSOutgoingType.Chat> = {
+      type: WSOutgoingType.Chat,
       payload: message,
     }
+
+    this._socket.send(JSON.stringify(wrapped))
+  }
+
+  public editMessage(message: EditMessage) {
+    const wrapped: WSOutgoingMessage<WSOutgoingType.Edit> = {
+      type: WSOutgoingType.Edit,
+      payload: message,
+    }
+
     this._socket.send(JSON.stringify(wrapped))
   }
 
   public joinRoom(room: string) {
-    const wrapped = {
-      type: "join",
+    const wrapped: WSOutgoingMessage<WSOutgoingType.Join> = {
+      type: WSOutgoingType.Join,
       payload: room,
     }
     this._socket.send(JSON.stringify(wrapped))

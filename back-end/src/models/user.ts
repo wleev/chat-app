@@ -12,6 +12,7 @@ import {
 
 import sequelizeConnection from "../database"
 import ChatRoom from "./chatroom"
+import Message from "./message"
 
 export default class User extends Model<
   InferAttributes<User, { omit: "ownedChatRooms" }>,
@@ -22,6 +23,7 @@ export default class User extends Model<
 
   declare ownedChatRooms?: NonAttribute<ChatRoom[]>
   declare chatRooms?: NonAttribute<ChatRoom[]>
+  declare messages?: NonAttribute<Message[]>
 
   declare createChatRoom: HasManyCreateAssociationMixin<ChatRoom>
   declare removeChatRoom: HasManyRemoveAssociationMixin<
@@ -32,6 +34,7 @@ export default class User extends Model<
   declare static associations: {
     ownedChatRooms: Association<User, ChatRoom>
     chatRooms: Association<User, ChatRoom>
+    messages: Association<User, Message>
   }
 }
 
@@ -60,3 +63,5 @@ User.hasMany(ChatRoom, {
 User.belongsToMany(ChatRoom, { as: "chatRooms", through: "User_ChatRooms" })
 ChatRoom.belongsToMany(User, { as: "members", through: "User_ChatRooms" })
 ChatRoom.belongsTo(User, { as: "creator", foreignKey: "creatorId" })
+User.hasMany(Message, { sourceKey: "id", foreignKey: "senderId" })
+Message.belongsTo(User, { as: "sender", foreignKey: "senderId" })

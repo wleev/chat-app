@@ -19,6 +19,17 @@ export const getByName = async (name: string): Promise<ChatRoom | null> => {
   return await ChatRoom.findOne({ where: { name }, include: ["members"] })
 }
 
+export const createChatRoom = async (name: string, userId: number) => {
+  const user = await User.findOne({ where: { id: userId } })
+  if (!user) {
+    throw new Error("User not found")
+  }
+
+  const room = await ChatRoom.create({ name, creatorId: userId })
+  await room.addMember(user)
+  return room
+}
+
 export const getJoinedByUserId = async (
   userId: number,
 ): Promise<ChatRoom[]> => {

@@ -1,5 +1,5 @@
 import Hapi, { Server } from "@hapi/hapi"
-import { register } from "./controllers/websocket"
+import { register } from "./websocket"
 
 export const create = async (): Promise<Server> => {
   const server = Hapi.server({

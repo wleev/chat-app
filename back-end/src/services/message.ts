@@ -65,11 +65,13 @@ export const getByChatRoomId = async (
   page: number,
   pageSize: number,
 ): Promise<Message[]> => {
+  console.log("chatRoomId", chatRoomId)
   const messages = await Message.findAll({
     where: { chatRoomId },
     offset: page * pageSize,
     limit: pageSize,
     order: [["timestamp", "DESC"]],
+    include: ["sender"],
   })
   return messages
 }

@@ -11,6 +11,14 @@ function register(server: Server) {
       return chatRoomController.getAll(req, h)
     },
   })
+
+  server.route({
+    method: "POST",
+    path: "/chatrooms",
+    handler: (req: Request, h: ResponseToolkit) => {
+      return chatRoomController.createChatRoom(req, h)
+    },
+  })
 }
 
 export default register

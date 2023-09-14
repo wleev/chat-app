@@ -9,6 +9,9 @@ const CREATE_CHATROOM = BASE_URL + "/create-chatroom"
 export async function login(username: string): Promise<User> {
   const response = await fetch(LOGIN, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ username }),
   })
 
@@ -18,18 +21,4 @@ export async function login(username: string): Promise<User> {
 
   const user: User = await response.json()
   return user
-}
-
-export async function createChatRoom(
-  name: string,
-  userId: number,
-): Promise<void> {
-  const response = await fetch(CREATE_CHATROOM, {
-    method: "POST",
-    body: JSON.stringify({ name, userId }),
-  })
-
-  if (!response.ok) {
-    throw new Error("Error: Chat room not created")
-  }
 }

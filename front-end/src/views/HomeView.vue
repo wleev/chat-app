@@ -48,15 +48,41 @@
             {{ room.name }} ({{ room.members.length }})
           </button>
         </div>
-        <div class="h-full grow flex flex-col overflow-y-auto">
+        <div
+          v-if="selectedRoom"
+          class="h-full grow flex flex-col overflow-y-auto"
+        >
           <div class="grow bg-white">
             <div
-              v-for="message in chatStore.getMessages(selectedRoom)"
+              v-for="(message, idx) in chatStore.getMessages(selectedRoom.name)"
               :key="message.id"
               class="justify-start p-2 text-black"
             >
-              [{{ message.timestamp }}] {{ message.sender }}:
-              {{ message.content }}
+              <button
+                v-if="
+                  message.sender == chatStore.user.nickname &&
+                  idx === chatStore.messages[selectedRoom.name].length - 1
+                "
+                class="text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center mr-2 mb-2"
+                @click="enableEdit(message.id, message.content)"
+              >
+                Edit
+              </button>
+              <span v-if="editMessageId !== message.id">
+                [{{ message.timestamp }}] {{ message.sender }}:
+                {{ message.content }}
+              </span>
+              <input
+                v-if="editMessageId === message.id"
+                v-model="editMessageContent"
+                type="text"
+                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 w-full"
+                placeholder="Edit your message here"
+                required
+                :disabled="!selectedRoom"
+                @keyup.enter="editMessage(message.id, editMessageContent)"
+                @keyup.esc="cancelEdit"
+              />
             </div>
           </div>
           <div class="">
@@ -67,8 +93,19 @@
               class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 w-full"
               placeholder="type your message here"
               required
+              :disabled="!selectedRoom"
               @keyup.enter="sendMessage(newMessage)"
             />
+          </div>
+        </div>
+        <div class="bg-white border-l border-l-black px-4 py-2">
+          <div v-for="member in selectedRoom?.members" :key="member.id">
+            <p
+              class="text-gray-500"
+              :class="{ 'text-green-500': member.online }"
+            >
+              {{ member.nickname }}
+            </p>
           </div>
         </div>
       </div>
@@ -85,7 +122,9 @@ const chatStore = useChatStore()
 const username = ref("")
 const newRoom = ref("")
 const newMessage = ref("")
-const selectedRoom = ref("")
+const selectedRoom = ref<ChatRoom>()
+const editMessageId = ref("")
+const editMessageContent = ref("")
 
 async function onSubmit() {
   console.log("username", username.value)
@@ -99,14 +138,32 @@ async function createChatRoom() {
 }
 
 async function goToRoom(room: ChatRoom) {
-  console.log("room", room.name)
-  selectedRoom.value = room.name
-  await chatStore.joinChatRoom(room.name)
+  console.log("room", room)
+  selectedRoom.value = room
+  await chatStore.joinChatRoom(room)
 }
 
 async function sendMessage(msg: string) {
   console.log("msg", msg)
-  await chatStore.sendMessage(msg, selectedRoom.value)
+  await chatStore.sendMessage(msg, selectedRoom.value!.name)
   newMessage.value = ""
+}
+
+async function editMessage(msgId: string, msgContent: string) {
+  console.log("msgId", msgId)
+  console.log("msgContent", msgContent)
+  await chatStore.editMessage(msgContent, msgId, selectedRoom.value!.name)
+  editMessageId.value = ""
+  editMessageContent.value = ""
+}
+
+async function cancelEdit() {
+  editMessageId.value = ""
+  editMessageContent.value = ""
+}
+
+async function enableEdit(msgId: string, msgContent: string) {
+  editMessageId.value = msgId
+  editMessageContent.value = msgContent
 }
 </script>

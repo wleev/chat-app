@@ -39,6 +39,14 @@ Message.init(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
+    chatRoomId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    senderId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
     content: {
       type: DataTypes.STRING,
       allowNull: false,

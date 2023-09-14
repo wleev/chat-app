@@ -11,14 +11,6 @@ function register(server: Server) {
       return userController.findOrCreate(req, h)
     },
   })
-
-  server.route({
-    method: "POST",
-    path: "/user/create-chatroom",
-    handler: (req: Request, h: ResponseToolkit) => {
-      return userController.createChatRoom(req, h)
-    },
-  })
 }
 
 export default register
