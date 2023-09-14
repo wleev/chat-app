@@ -1,7 +1,10 @@
 import type Message from "@/models/message"
 import type User from "@/models/user"
 
-const BASE_URL = new URL("messages", import.meta.env.VITE_API_BASE).href
+const BASE_URL = new URL(
+  "messages",
+  import.meta.env.VITE_API_BASE || (window as any).env.API_URL,
+).href
 const BYROOM_URL = BASE_URL + "/by-chatroom"
 
 interface ChatRoomMessageRequest {

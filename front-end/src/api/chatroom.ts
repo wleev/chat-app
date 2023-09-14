@@ -1,6 +1,9 @@
 import type ChatRoom from "@/models/chatroom"
 
-const BASE_URL = new URL("chatrooms", import.meta.env.VITE_API_BASE)
+const BASE_URL = new URL(
+  "chatrooms",
+  import.meta.env.VITE_API_BASE || (window as any).env.API_URL,
+)
 
 export async function getChatrooms(): Promise<ChatRoom[]> {
   const response = await fetch(BASE_URL.href)

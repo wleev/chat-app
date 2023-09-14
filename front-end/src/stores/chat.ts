@@ -1,6 +1,6 @@
 import { createChatRoom, getChatrooms } from "@/api/chatroom"
 import ChatSocket from "@/api/chatsocket"
-import { getMessages } from "@/api/mesages"
+import { getMessages } from "@/api/messages"
 import { login } from "@/api/user"
 import type ChatRoom from "@/models/chatroom"
 import type Message from "@/models/message"
@@ -8,7 +8,10 @@ import type User from "@/models/user"
 import type { ChatUpdate, RoomsUpdate, StatusUpdate } from "@/types/chatsocket"
 import { defineStore } from "pinia"
 
-const WS_URL = new URL("websocket", import.meta.env.VITE_WS_BASE).href
+const WS_URL = new URL(
+  "websocket",
+  import.meta.env.VITE_WS_BASE || (window as any).env.WS_URL,
+).href
 
 type ChatState = {
   socket: ChatSocket | null

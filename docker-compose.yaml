@@ -1,0 +1,47 @@
+version: '3'
+
+services:
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_USER: chat_db
+      MARIADB_PASSWORD: chat1234!
+      MARIADB_DATABASE: chat-db
+      MARIADB_ROOT_PASSWORD: root123!
+    expose:
+      - "3306"
+    volumes:
+      - chat_data:/var/lib/mysql
+    restart: always
+  back-end:
+    image: chat-be
+    environment:
+      NODE_ENV: production
+      DB_NAME: chat-db
+      DB_USER: chat_db
+      DB_HOST: db
+      DB_DRIVER: mysql
+      DB_PASSWORD: chat1234!
+      PORT: 4000
+    build:
+      context: .
+      dockerfile: Dockerfile.be
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_started
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.fe
+    image: chat-fe
+    environment:
+      CHAT_API_URL: http://localhost:4000
+      CHAT_WS_URL: ws://localhost:4000
+    depends_on:
+      - back-end
+    ports:
+      - "8000:80"
+volumes:
+  chat_data:

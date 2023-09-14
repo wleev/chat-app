@@ -1,6 +1,9 @@
 import type User from "@/models/user"
 
-const BASE_URL = new URL("/user", import.meta.env.VITE_API_BASE).href
+const BASE_URL = new URL(
+  "/user",
+  import.meta.env.VITE_API_BASE || (window as any).env.API_URL,
+).href
 console.log("BASE_URL", BASE_URL)
 
 const LOGIN = BASE_URL + "/login"
